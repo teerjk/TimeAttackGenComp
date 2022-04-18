@@ -5,7 +5,7 @@
   "TimeAttackGenComp.target_bed": "FILE: full path to BED: eg. 1000_gen/1000g_0.15MAF.refGene.uniq.bed",
   "TimeAttackGenComp.ref": "STRING: full path to snap index folder",
   "TimeAttackGenComp.ref_fasta": "FILE: full path to genome reference multi-fasta",
-  "TimeAttackGenComp.compare": "STRING: full path to local compare_simple.pl",
-  "TimeAttackGenComp.R_heatmap": "STRING: full path to local heatmap.R",
-  "TimeAttackGenComp.plot_dist": "STRING: full path to local plot_dist.R"
+  "TimeAttackGenComp.compare": "/TimeAttackGenComp-master/compare_simple.pl",
+  "TimeAttackGenComp.R_heatmap": "/TimeAttackGenComp-master/heatmap.R",
+  "TimeAttackGenComp.plot_dist": "/TimeAttackGenComp-master/plot_dist.R"
 }

@@ -84,9 +84,10 @@ task align_pair {
     String ref
     String output_base
     String output_type = "wes"
+    String snap_path = "/snap-2.0.1"
 
     command {
-        snap-aligner \
+        ${snap_path}/snap-aligner \
             paired \
             ${ref} \
             ${fq1} \
@@ -104,6 +105,7 @@ task align_pair {
         memory: "155G"
         pbs_cpu: "16"
         pbs_walltime: "6:00:00"
+        docker: "timeattackgencomp_0.1"
     }
 }
 
@@ -113,9 +115,10 @@ task call_vars {
     File target_bed
     File ref_fasta
     String output_base
+    String bcf_path = "/bcftools-1.15.1"
 
     command {
-        bcftools mpileup \
+        ${bcf_path}/bcftools mpileup \
             --output-type u \
             --no-BAQ \
             --max-depth 1000 \
@@ -123,7 +126,7 @@ task call_vars {
             --regions-file ${target_bed} \
             --annotate FORMAT/AD,FORMAT/DP \
             ${bam} \
-            | bcftools call \
+            | ${bcf_path}/bcftools call \
                 --multiallelic-caller \
                 --output-type v \
                 --keep-alts \
@@ -136,15 +139,17 @@ task call_vars {
     runtime {
         memory: "6G"
         pbs_walltime: "6:00:00"
+        docker: "timeattackgencomp_0.1"
     }
 }
 
 task convert_vcf {
     File vcf
     String output_name
+    String bcf_path = "/bcftools-1.15.1"
 
     command <<<
-        bcftools query \
+        ${bcf_path}/bcftools query \
             -f '%CHROM\t%POS\t[%TGT]\n' \
             ${vcf} \
             | perl -a -F"\t" -nle 'unless ($F[2] eq "./.") {$F[2] =~ s/\///; $F[2] = join "", sort (split //, $F[2]);} print (join "\t", @F);' \
@@ -156,15 +161,17 @@ task convert_vcf {
     runtime {
         memory: "4G"
         pbs_walltime: "12:00:00"
+        docker: "timeattackgencomp_0.1"
     }
 }
 
 task extract_af {
     File vcf
     String output_name
+    String bcf_path = "/bcftools-1.15.1"
 
     command <<<
-        bcftools query \
+        ${bcf_path}/bcftools query \
             -i 'FORMAT/DP>0 & QUAL >20' \
             -f '%CHROM\t%POS\t%REF\t%ALT\t[%GT]\t[%DP]\t[%AD]\n' ${vcf} \
             | perl -a -F"\t" -nle '@ad = split /,/, $F[6]; $af = sprintf("%0.3f", ($ad[1] / $F[5])); push @F, $af; print(join "\t", @F)' \
@@ -176,6 +183,7 @@ task extract_af {
     runtime {
         memory: "2G"
         pbs_walltime: "1:00:00"
+        docker: "timeattackgencomp_0.1"
     }
 }
 
@@ -194,6 +202,7 @@ task plot_af {
     runtime {
         memory: "2G"
         pbs_walltime: "1:00:00"
+        docker: "timeattackgencomp_0.1"
     }
 }
 
@@ -218,6 +227,7 @@ task compare_snvs {
     runtime {
         memory: "50G"
         pbs_walltime: "180:00:00"
+        docker: "timeattackgencomp_0.1"
     }
 }
 
@@ -235,6 +245,7 @@ task heatmap {
     runtime {
         memory: "5G"
         pbs_walltime: "2:00:00"
+        docker: "timeattackgencomp_0.1"
     }
 }
 
