@@ -10,8 +10,17 @@ workflow TimeAttackGenComp {
 
     String output_name
     String output_dir
-    File inputFastqFile
-    Array[Array[File]] inputSamples = read_tsv(inputFastqFile)
+    File? inputFastqFile  # sample_name full_path_to_fastq_1 full_path_to_fastq_2
+    File? inputBamFile  # sample_name full_path_to_bam full_path_to_bai
+
+    # Test if inputBamFile is set, and start from BAM is desired. 
+    # If both inputFastqFile and inputBamFile set, defaults to use inputBamFile
+    # !!! NOTE: if not set, assumes inputFastqFile is set. Will result in error if neither set.
+    Boolean startFromBam = if defined(inputBamFile)==true then true else false
+    Array[Array[File]] inputSamples = if defined(inputFastqFile)==true
+        then read_tsv(inputFastqFile)
+        else read_tsv(inputBamFile)
+
     File target_bed
     String ref
     File ref_fasta
@@ -21,16 +30,18 @@ workflow TimeAttackGenComp {
     String plot_dist
 
     scatter (sample in inputSamples) {
-        call align_pair {
-            input: output_base=sample[0],
-                fq1=sample[1],
-                fq2=sample[2],
-                ref=ref
+        if (!startFromBam) {
+            call align_pair {
+                input: output_base=sample[0],
+                    fq1=sample[1],
+                    fq2=sample[2],
+                    ref=ref
+            }
         }
 
         call call_vars {
-            input: bam=align_pair.bam,
-                bai=align_pair.bai,
+            input: bam=if startFromBam then sample[1] else align_pair.bam,
+                bai=if startFromBam then sample[2] else align_pair.bai,
                 target_bed=target_bed,
                 ref_fasta=ref_fasta,
                 output_base=sample[0]
@@ -93,6 +104,7 @@ task align_pair {
             ${fq1} \
             ${fq2} \
             -t 16 \
+            -xf 2.0 \
             -so \
             -R '@RG\tID:${output_base}\tSM:${output_base}\tPL:ILLUMINA\tLB:${output_base}_${output_type}' \
             -o ${output_base}.bam
@@ -105,7 +117,7 @@ task align_pair {
         memory: "155G"
         pbs_cpu: "16"
         pbs_walltime: "6:00:00"
-        docker: "timeattackgencomp_0.1"
+        docker: "timeattackgencomp_0.2"
     }
 }
 
@@ -139,7 +151,7 @@ task call_vars {
     runtime {
         memory: "6G"
         pbs_walltime: "6:00:00"
-        docker: "timeattackgencomp_0.1"
+        docker: "timeattackgencomp_0.2"
     }
 }
 
@@ -161,7 +173,7 @@ task convert_vcf {
     runtime {
         memory: "4G"
         pbs_walltime: "12:00:00"
-        docker: "timeattackgencomp_0.1"
+        docker: "timeattackgencomp_0.2"
     }
 }
 
@@ -183,7 +195,7 @@ task extract_af {
     runtime {
         memory: "2G"
         pbs_walltime: "1:00:00"
-        docker: "timeattackgencomp_0.1"
+        docker: "timeattackgencomp_0.2"
     }
 }
 
@@ -202,7 +214,7 @@ task plot_af {
     runtime {
         memory: "2G"
         pbs_walltime: "1:00:00"
-        docker: "timeattackgencomp_0.1"
+        docker: "timeattackgencomp_0.2"
     }
 }
 
@@ -227,7 +239,7 @@ task compare_snvs {
     runtime {
         memory: "50G"
         pbs_walltime: "180:00:00"
-        docker: "timeattackgencomp_0.1"
+        docker: "timeattackgencomp_0.2"
     }
 }
 
@@ -245,7 +257,7 @@ task heatmap {
     runtime {
         memory: "5G"
         pbs_walltime: "2:00:00"
-        docker: "timeattackgencomp_0.1"
+        docker: "timeattackgencomp_0.2"
     }
 }
 
