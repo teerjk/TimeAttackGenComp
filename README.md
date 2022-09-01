@@ -53,7 +53,7 @@ To run the end-to-end pipeline, a WDL script is provided. You will need to prepa
     1. BAI_file_full_path
 
 ### Using Docker ###
-A Dockerfile is provided that includes SNAP, samtools, and downloads the latest version of this TimeAttackGenComp repository. We have successfully built with Docker and converted to Singularity .sif files. You can then define the docker/singularity image in the runtime blocks of TimeAttackGenComp.wdl. (This is currently defined as "timeattackgencomp_0.2", but you may need to change depending on how you define your images.) You will need to define your cromwell application file to appropriately handle containers in your environment. See the [Cromwell Container documentation] (https://cromwell.readthedocs.io/en/stable/tutorials/Containers/) for details.
+A Dockerfile is provided that includes SNAP, samtools, and downloads the latest version of this TimeAttackGenComp repository. We have successfully built with Docker and converted to Singularity .sif files. You can then define the docker/singularity image in the runtime blocks of TimeAttackGenComp.wdl. (This is currently defined as "timeattackgencomp_0.2", but you may need to change depending on how you define your images.) You will need to define your cromwell application file to appropriately handle containers in your environment. See the [Cromwell Container documentation](https://cromwell.readthedocs.io/en/stable/tutorials/Containers/) for details.
 
 ### Interpreting Output ###
 1. The main output is OUTPUT_NAME.snv.out.txt. This file is a tab-delim text showing the all-vs-all matrix of sample-sample genotype discordance. This file can be loaded into Excel for visualization.
