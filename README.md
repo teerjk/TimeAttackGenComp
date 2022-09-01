@@ -6,37 +6,54 @@
 
 ### Purpose ###
 Massively parallel sequencing involves many sample handling steps leading to the potential for inappropriate sample identity. This can result from sample swaps, sample mixing, or similar. This tool is designed to compare genotypes at defined positions (ideally, common SNPs). The level of genotype discordance can be used to infer sample relationships. Low discordance between a pair of samples indicates samples coming from the same individual; higher discordance indicates samples come from separate individuals. This measured genetic discordance can be compare to expected sample relationships to confirm sample pairs, or ensure all samples are from unique individuals.
-A workflow is provided to start from FASTQ files, perform fast alignment with SNAP, call variants with BCFtools, and compare with a fast perl script. Several additional plotting features are added to assist with QC evaluation.
+A workflow is provided to start from FASTQ or BAM files. When starting from FASTQ, fast alignment is performed with SNAP. Variants are then called with BCFtools, and compared with a fast Perl script. Several additional plotting features are added to assist with QC evaluation.
 
 ### Prerequisites ### 
 1. Cromwell (tested with version 38): https://github.com/broadinstitute/cromwell
-1. SNAP (tested with verion 1.0.3 and 1.0dev.104): https://github.com/amplab/snap
-1. BCFTools (tested with version 1.9): https://github.com/samtools/bcftools
+1. SNAP (tested with version 1.0.3, 1.0dev.104, and 2.0.1): https://github.com/amplab/snap
+1. BCFTools (tested with version 1.9, 1.15.1): https://github.com/samtools/bcftools
 1. Java (to run cromwell)
 1. Perl (to run comparison)
 1. R (for plotting)
 
+SNAP genome references indexes need to be built before use. Check SNAP documentation, but this should work:
+```
+snap-aligner index ref.fa .
+```
+
+
 ### Getting started ###
-To run the end-to-end pipeline, a WDL script is provided. You will need to prepare a sample input file, fill in details in the input.json file, and ensure 'snap-aligner' and 'bcftools' are in your PATH. You may want to edit the WDL script to adjust resources defined in each "runtime" block.
+To run the end-to-end pipeline, a WDL script is provided. You will need to prepare a sample input file, fill in details in the input.json file, and ensure 'snap-aligner' and 'bcftools' are installed and in your PATH. (Alternately, see below to use the provided docker file.) You may want to edit the WDL script to adjust resources defined in each "runtime" block and remove the "docker" blocks if you are not using the container.
 
 1. Download repository to a known location.
-1. Copy WDL script and input.json to working directory and change to working dir.
+1. Copy TimeAttackGenComp.wdl and TimeAttackGenComp_inputs.json to working directory and change to working dir.
 1. Create a sample input file: a tab-delimited text file, one sample per line with the following columns
     1. sample_name
     1. FASTQ_read1_full_path
     1. FASTQ_read2_full_path
-1. Edit input.json file:
+1. Edit TimeAttackGenComp_inputs.json file:
     1. output_name: define an output name for the summary files
     1. inputFastqFile: the full path to the input text file from step 3.
     1. output_dir: full path to directory for output files (will be created if it doesn't exist).
-    1. target_bed: A BED file based on the appropriate genome reference defining positions to compare. A file based on GRCh37 coordinates within refGene regions that have 1000 Genomes allele frequency >15% has been provided for convenience.
-    1. ref: define the folder for SNAP reference indexes
+    1. target_bed: A BED file based on the appropriate genome reference defining positions to compare. Files based on GRCh37 and GRCh38 (lifted over) coordinates within refGene regions that have 1000 Genomes allele frequency >15% has been provided for convenience. Uncompress the included files if you wish to use them.
+    1. ref: define the folder for SNAP reference indexes, which need to be built before running.
     1. ref_fastq: full path to reference multi FASTA. A .fai file should be in the same folder.
     1. compare: Adjust the path to point to your local copy of compare_simple.pl
     1. R_heatmap: Adjust the path to point to your local copy of heatmap.R
     1. plot_dist: Adjust the path to point to your local copy of plot_dist.R
 1. Submit the WDL file to cromwell. An example bash wrapper is provided (adjust to point to your configuration and cromwell .jar file.
 1. When satisfied, delete the temporary files in cromwell-executions/ and cromwell-workflow-logs/
+
+### Alternate input: BAM files ###
+1. Edit TimeAttackGenComp_inputs.json file:
+    1. Change `inputFastqFile` to `inputBamFile`
+1. Sample file format is a slightly different tab-delimited text file:
+    1. sample_name
+    1. BAM_file_full_path
+    1. BAI_file_full_path
+
+### Using Docker ###
+A Dockerfile is provided that includes SNAP, samtools, and downloads the latest version of this TimeAttackGenComp repository. We have successfully built with Docker and converted to Singularity .sif files. You can then define the docker/singularity image in the runtime blocks of TimeAttackGenComp.wdl. (This is currently defined as "timeattackgencomp_0.2", but you may need to change depending on how you define your images.) You will need to define your cromwell application file to appropriately handle containers in your environment. See the [Cromwell Container documentation] (https://cromwell.readthedocs.io/en/stable/tutorials/Containers/) for details.
 
 ### Interpreting Output ###
 1. The main output is OUTPUT_NAME.snv.out.txt. This file is a tab-delim text showing the all-vs-all matrix of sample-sample genotype discordance. This file can be loaded into Excel for visualization.
@@ -50,9 +67,9 @@ We have noticed that tumor samples with extensive Loss Of Heterozygoisty (LOH) c
 We have also noticed that samples with low levels of sample mixing may not have high discrepancy when compared to another uncontaminated sample from the same individual. This is due to the calling of a genotype: low levels of contamination from another sample may not affect genotyping (by design to avoid error from contamination.) Viewing the allele frequency plots may be useful: look for 'pinched' allele frequency bands at ~5-10% and ~90-95%. If seen in all chromsomes, this suggests sample mixing, although other experiments should be run to confirm.
 
 ### Todo ###
-1. Allow for running the workflow with BAM, VCF, or snv.smp input files to avoid alignment and genotype calling if not needed.
+1. Allow for running the workflow with VCF or snv.smp input files to avoid genotype calling if not needed.
 1. Address false mismatch due to LOH.
-1. Prepare Docker containers to use within WDL.
+1. Prepare Docker containers to use within WDL. DONE!
 
 ### Citation ###
-Preprint coming soon!
+Hopefully coming soon!
