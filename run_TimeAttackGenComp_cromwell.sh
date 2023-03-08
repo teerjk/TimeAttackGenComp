@@ -1,11 +1,9 @@
 #!/bin/bash
-#PBS -V
-#PBS -l mem=4G,walltime=20:00:00
-
-module load java/1.8.0_101
+#SLURM --mem=4G
+#SLURM --time=20:00:00
 
 java -Xmx4G \
-    -Dconfig.file=./application.conf.cic \
+    -Dconfig.file=./application.slurm.singularity.conf \
     -DLOG_MODE=standard \
     -jar cromwell.jar \
     run \
