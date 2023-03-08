@@ -208,6 +208,10 @@ for (my $i=0; $i <= $#sample_names; $i++) {
 my $end_t = time();
 printf STDERR ("%s\t%d\n", "Comparison time:", ($end_t - $start_t));
 
+my $mem = `ps -p $$ --noheader -o size`;
+printf STDERR ("%s\t%0.3f\n", "Memory used (MB):", ($mem / 1024));
+
+
 #################
 # Print output
 #################

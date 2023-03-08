@@ -1,10 +1,32 @@
 {
   "TimeAttackGenComp.output_name": "STRING: name for summary output files",
-  "TimeAttackGenComp.inputFastqFile": "FILE: tab-delim: sample_name FQ1 FQ2",
-  "TimeAttackGenComp.output_dir": "FOLDER: folder in which to copy output files",
+  "TimeAttackGenComp.output_dir": "FOLDER: folder in which to copy output files (will be created if absent)",
+    
+  "_comment_": "_____Select one input file group below and delete the others: FASTQ, BAM, VCF_____",
+  "_comment_": "_____Keeping more than one will result in unexpected behavior!_____",
+
+  "_comment_": "_____FASTQ input_____",
+  "TimeAttackGenComp.inputFile": "FILE: tab-delim: sample_name FQ1 FQ2",
+  "TimeAttackGenComp.runAlign": "true",
+  "TimeAttackGenComp.runGenotype": "true",
+
+  "_comment_": "_____BAM input_____",
+  "TimeAttackGenComp.inputFile": "FILE: tab-delim: sample_name BAM BAI",
+  "TimeAttackGenComp.runAlign": "false",
+  "TimeAttackGenComp.runGenotype": "true",
+
+  "_comment_": "_____VCF input_____",
+  "TimeAttackGenComp.inputFile": "FILE: tab-delim: sample_name VCF",
+  "TimeAttackGenComp.runAlign": "false",
+  "TimeAttackGenComp.runGenotype": "false",
+
+
+  "_comment_": "_____SET REFERENCE GENOME AND TARGET INFO HERE_____",
   "TimeAttackGenComp.target_bed": "FILE: full path to BED: eg. 1000_gen/1000g_0.15MAF.refGene.uniq.bed",
   "TimeAttackGenComp.ref": "STRING: full path to snap index folder",
   "TimeAttackGenComp.ref_fasta": "FILE: full path to genome reference multi-fasta",
+
+  "_comment_": "_____Binary locations within the docker container - should not need to change_____",
   "TimeAttackGenComp.compare": "/TimeAttackGenComp-master/compare_simple.pl",
   "TimeAttackGenComp.R_heatmap": "/TimeAttackGenComp-master/heatmap.R",
   "TimeAttackGenComp.plot_dist": "/TimeAttackGenComp-master/plot_dist.R"

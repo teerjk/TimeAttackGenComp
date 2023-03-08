@@ -10,16 +10,15 @@ workflow TimeAttackGenComp {
 
     String output_name
     String output_dir
-    File? inputFastqFile  # sample_name full_path_to_fastq_1 full_path_to_fastq_2
-    File? inputBamFile  # sample_name full_path_to_bam full_path_to_bai
 
-    # Test if inputBamFile is set, and start from BAM is desired. 
-    # If both inputFastqFile and inputBamFile set, defaults to use inputBamFile
-    # !!! NOTE: if not set, assumes inputFastqFile is set. Will result in error if neither set.
-    Boolean startFromBam = if defined(inputBamFile)==true then true else false
-    Array[Array[File]] inputSamples = if defined(inputFastqFile)==true
-        then read_tsv(inputFastqFile)
-        else read_tsv(inputBamFile)
+    # inputFile format depends on content. Tab-delimited, one row per sample
+    #FASTQ: sample_name full_path_to_fastq_1 full_path_to_fastq_2
+    #BAM:   sample_name full_path_to_bam full_path_to_bai
+    #VCF:   sample_name full_path_to_vcf
+    File inputFile  
+    Array[Array[File]] inputSamples = read_tsv(inputFile)
+    Boolean runAlign
+    Boolean runGenotype
 
     File target_bed
     String ref
@@ -30,7 +29,7 @@ workflow TimeAttackGenComp {
     String plot_dist
 
     scatter (sample in inputSamples) {
-        if (!startFromBam) {
+        if (runAlign) {
             call align_pair {
                 input: output_base=sample[0],
                     fq1=sample[1],
@@ -39,22 +38,23 @@ workflow TimeAttackGenComp {
             }
         }
 
-        call call_vars {
-            input: bam=if startFromBam then sample[1] else align_pair.bam,
-                bai=if startFromBam then sample[2] else align_pair.bai,
-                target_bed=target_bed,
-                ref_fasta=ref_fasta,
-                output_base=sample[0]
+        if (runGenotype) {
+            call call_vars {
+                input: bam=select_first([align_pair.bam, sample[1]]),
+                    bai=select_first([align_pair.bai, sample[2]]),
+                    target_bed=target_bed,
+                    ref_fasta=ref_fasta,
+                    output_base=sample[0]
+            }
         }
                 
-    
         call convert_vcf {
-            input: vcf=call_vars.vcf,
+            input: vcf=select_first([call_vars.vcf, sample[1]]),
                 output_name=sample[0]
         }
 
         call extract_af {
-            input: vcf=call_vars.vcf,
+            input: vcf=select_first([call_vars.vcf, sample[1]]),
                 output_name=sample[0]
         }
 
@@ -83,10 +83,15 @@ workflow TimeAttackGenComp {
         input: output_dir=output_dir,
             comp_input=compare_snvs.snv,
             heatmap=heatmap.pdf,
-            vcf_inputs=call_vars.vcf,
             af_inputs= flatten([ extract_af.af, plot_af.dist, plot_af.chr ])
     }
 
+    if (runGenotype) {
+        call copy_vcf {
+            input: output_dir=output_dir,
+                vcf_inputs=select_all(call_vars.vcf)
+        }
+    }
 }
 
 task align_pair {
@@ -264,16 +269,28 @@ task heatmap {
 task copy_results {
     File comp_input
     File heatmap
-    Array[File] vcf_inputs
     Array[File] af_inputs
     String output_dir
 
     command <<<
-        mkdir -p ${output_dir}/vcf ${output_dir}/af; \
+        mkdir -p ${output_dir}/af; \
         cp ${comp_input} ${output_dir}; \
         cp ${heatmap} ${output_dir}; \
-        for i in ${sep=' ' vcf_inputs}; do cp $i ${output_dir}/vcf/; done; \
         for i in ${sep=' ' af_inputs}; do cp $i ${output_dir}/af/; done;
+    >>>
+    runtime {
+        memory: "1G"
+        pbs_walltime: "2:00:00"
+    }
+}
+
+task copy_vcf {
+    String output_dir
+    Array[File] vcf_inputs
+
+    command <<<
+        mkdir -p ${output_dir}/vcf; \
+        for i in ${sep=' ' vcf_inputs}; do cp $i ${output_dir}/vcf/; done;
     >>>
     runtime {
         memory: "1G"
