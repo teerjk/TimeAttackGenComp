@@ -50,11 +50,15 @@ workflow TimeAttackGenComp {
                 
         call convert_vcf {
             input: vcf=select_first([call_vars.vcf, sample[1]]),
+                tbi=select_first([call_vars.tbi, sample[2]]),
+                target_bed=target_bed,
                 output_name=sample[0]
         }
 
         call extract_af {
             input: vcf=select_first([call_vars.vcf, sample[1]]),
+                tbi=select_first([call_vars.tbi, sample[2]]),
+                target_bed=target_bed,
                 output_name=sample[0]
         }
 
@@ -89,7 +93,7 @@ workflow TimeAttackGenComp {
     if (runGenotype) {
         call copy_vcf {
             input: output_dir=output_dir,
-                vcf_inputs=select_all(call_vars.vcf)
+                vcf_inputs=select_all( flatten([call_vars.vcf, call_vars.tbi]) )
         }
     }
 }
@@ -145,13 +149,15 @@ task call_vars {
             ${bam} \
             | ${bcf_path}/bcftools call \
                 --multiallelic-caller \
-                --output-type v \
+                --output-type z \
                 --keep-alts \
                 --skip-variants indels \
-                --output ${output_base}.vcf
+                --output ${output_base}.vcf.gz \
+        && ${bcf_path}/bcftools index -t ${output_base}.vcf.gz
     }
     output {
-        File vcf = "${output_base}.vcf"
+        File vcf = "${output_base}.vcf.gz"
+        File tbi = "${output_base}.vcf.gz.tbi"
     }
     runtime {
         memory: "6G"
@@ -162,11 +168,14 @@ task call_vars {
 
 task convert_vcf {
     File vcf
+    File tbi
+    File target_bed
     String output_name
     String bcf_path = "/bcftools-1.15.1"
 
     command <<<
         ${bcf_path}/bcftools query \
+            -R ${target_bed} \
             -f '%CHROM\t%POS\t[%TGT]\n' \
             ${vcf} \
             | perl -a -F"\t" -nle 'unless ($F[2] eq "./.") {$F[2] =~ s/\///; $F[2] = join "", sort (split //, $F[2]);} print (join "\t", @F);' \
@@ -184,12 +193,15 @@ task convert_vcf {
 
 task extract_af {
     File vcf
+    File tbi
+    File target_bed
     String output_name
     String bcf_path = "/bcftools-1.15.1"
 
     command <<<
         ${bcf_path}/bcftools query \
             -i 'FORMAT/DP>0 & QUAL >20' \
+            -R ${target_bed} \
             -f '%CHROM\t%POS\t%REF\t%ALT\t[%GT]\t[%DP]\t[%AD]\n' ${vcf} \
             | perl -a -F"\t" -nle '@ad = split /,/, $F[6]; $af = sprintf("%0.3f", ($ad[1] / $F[5])); push @F, $af; print(join "\t", @F)' \
             > ${output_name}.af

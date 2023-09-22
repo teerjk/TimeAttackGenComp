@@ -38,7 +38,8 @@ To run the end-to-end pipeline, a WDL script is provided. You will need to prepa
         1. BAI_full_path
     1. OR: create a VCF sample input file: a tab-delimited text file, one sample per line with the following columns
         1. sample_name
-        1. VCF_full_path
+        1. BGzipped_VCF_full_path
+        1. VCF.tbi_full_path
 1. Edit TimeAttackGenComp_inputs.json file:
     1. Select the desired input block (FASTQ, BAM, or VCF) and delete the other two.
     1. output_name: define an output name for the summary files

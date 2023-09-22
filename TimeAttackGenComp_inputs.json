@@ -16,7 +16,7 @@
   "TimeAttackGenComp.runGenotype": "true",
 
   "_comment_": "_____VCF input_____",
-  "TimeAttackGenComp.inputFile": "FILE: tab-delim: sample_name VCF",
+  "TimeAttackGenComp.inputFile": "FILE: tab-delim: sample_name VCF.gz VCF.tbi",
   "TimeAttackGenComp.runAlign": "false",
   "TimeAttackGenComp.runGenotype": "false",
 
