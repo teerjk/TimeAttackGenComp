@@ -82,4 +82,4 @@ We have also noticed that samples with low levels of sample mixing may not have 
 1. Prepare Docker containers to use within WDL. DONE!
 
 ### Citation ###
-Hopefully coming soon!
+Eschrich SA, Yu X, Teer JK. Fast all versus all genotype comparison using DNA/RNA sequencing data: method and workflow. BMC Bioinformatics. 2023 Apr 24;24(1):164. doi: 10.1186/s12859-023-05288-y. PMID: 37095442; PMCID: PMC10124007.

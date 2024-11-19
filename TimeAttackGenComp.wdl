@@ -14,7 +14,7 @@ workflow TimeAttackGenComp {
     # inputFile format depends on content. Tab-delimited, one row per sample
     #FASTQ: sample_name full_path_to_fastq_1 full_path_to_fastq_2
     #BAM:   sample_name full_path_to_bam full_path_to_bai
-    #VCF:   sample_name full_path_to_vcf
+    #VCF:   sample_name full_path_to_vcf.gz full_path_to_tbi 
     File inputFile  
     Array[Array[File]] inputSamples = read_tsv(inputFile)
     Boolean runAlign
